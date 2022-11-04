@@ -1,4 +1,7 @@
 from fltk import *
+import subprocess
+import os
+import random
 
 class game(Fl_Window):
 	def __init__(self,w,h,l):
@@ -22,13 +25,27 @@ class game(Fl_Window):
 		self.red.callback(self.but_press,'red')
 		self.green.callback(self.but_press,'green')
 		self.pressed = []
+		self.sequence = []
+		self.correctbut = iter(self.sequence)
+		#mp3 assingment
+		self.working_dir = os.getcwd()
+		self.working_dir = str(os.path.abspath(self.working_dir))
+		self.sound = 0
 		
+	def next_sequence(self):
+		self.sequence.append(random.choice(['yellow','blue','red','green']))
 	
 	def but_press(self,wid,color):
 		self.pressed.append(color)
+		if color == next(self.correctbut):
+			next_sequence()
+		self.sound = str(os.path.join(self.working_dir,f'{color}.mp3'))
+		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
+		
 		print(self.pressed)
 	
 	def play(self):
+		self.next_sequence
 		print('work')
 	
 	def start_cb(self,wid):
