@@ -30,25 +30,65 @@ class game(Fl_Window):
 		#mp3 assingment
 		self.working_dir = os.getcwd()
 		self.working_dir = str(os.path.abspath(self.working_dir))
+		self.temp = 0
 		self.sound = 0
 		
-	def next_sequence(self):
-		self.sequence.append(random.choice(['yellow','blue','red','green']))
+	def flash(self):
+		print(self.temp)
+		self.sound = str(os.path.join(self.working_dir,f'{self.sequence[self.temp]}.mp3'))
+		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
+		
+		if self.sequence[self.temp] == 'red':
+			self.red.color(FL_WHITE)
+		elif self.sequence[self.temp] == 'blue':
+			self.blue.color(FL_WHITE)
+		elif self.sequence[self.temp] == 'yellow':
+			self.yellow.color(FL_WHITE)
+		elif self.sequence[self.temp] == 'green':
+			self.green.color(FL_WHITE)
+		self.redraw()
+		Fl.add_timeout(0.4,self.change_back)
+		self.temp += 1
 	
+	def change_back(self):
+		self.red.color(FL_RED)
+		self.blue.color(FL_BLUE)
+		self.yellow.color(FL_YELLOW)
+		self.green.color(FL_GREEN)
+		self.redraw()
+	
+	def next_sequence(self):
+		self.temp = 0
+		self.pressed = []
+		self.sequence.append(random.choice(['yellow','blue','red','green']))
+		print(self.sequence)
+		for x in range(len(self.sequence)):
+			Fl.add_timeout(1.0+ 1.0*x,self.flash)
+		
+		
 	def but_press(self,wid,color):
 		self.pressed.append(color)
-		if color == next(self.correctbut):
-			next_sequence()
 		self.sound = str(os.path.join(self.working_dir,f'{color}.mp3'))
 		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
 		
-		print(self.pressed)
+		#if self.pressed[-1] == 
+		
+		for x in range(len(self.pressed)):
+			if self.pressed[x] == self.sequence[x]:
+				if len(self.pressed) == len(self.sequence):
+					Fl.add_timeout(1.0,self.next_sequence)
+			
+			else:
+				fl_message(f'your score is: {len(self.sequence)}')
+				
+		print('self.pressed: ' + str(self.pressed))
 	
 	def play(self):
-		self.next_sequence
+		self.next_sequence()
 		print('work')
 	
 	def start_cb(self,wid):
+		self.pressed = []
 		self.play()
 		
 app = game(400,400,'game')
