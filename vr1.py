@@ -58,7 +58,6 @@ class game(Fl_Window):
                 self.yellow.color(FL_YELLOW)
             else:
                 self.green.color(FL_GREEN)
-		
     '''
     
 
@@ -122,12 +121,12 @@ class game(Fl_Window):
 			Fl.add_timeout(1.25+ 1.025*x,self.flash)
 			Fl.add_timeout(1.0+1.0*len(self.sequence),self.activate_buttons)
 
-		Fl.add_timeout(1.0+1.0*len(self.sequence)+5.0,self.notime)
+		Fl.add_timeout(1.0+1.0*len(self.sequence)+5.0,self.after_5_seconds_and_no_input)
 
 
 	def but_press(self,wid,color):
 
-		Fl.remove_timeout(self.notime)
+		Fl.remove_timeout(self.after_5_seconds_and_no_input)
 		correct = False
 		self.pressed.append(color)
 		self.sound = str(os.path.join(self.working_dir,f'{color}.mp3'))
@@ -146,7 +145,7 @@ class game(Fl_Window):
 				self.sound = str(os.path.join(self.working_dir,'error.mp3'))
 				self.sound = subprocess.Popen(['vlc','--intf', 'dummy',self.sound])
 				Fl.add_timeout(5.0,self.kill_process,self.sound.pid)
-				Fl.remove_timeout(self.notime)
+				Fl.remove_timeout(self.after_5_seconds_and_no_input)
 				fl_message(f'your score is: {len(self.sequence)}')
 				correct = False
 				self.pressed = []
@@ -155,16 +154,15 @@ class game(Fl_Window):
 				break
 
 		Fl.add_timeout(1.0,self.kill_process,self.sound.pid)
-		Fl.add_timeout(5.0,self.notime)
+		Fl.add_timeout(5.0,self.after_5_seconds_and_no_input)
 
 		if correct == True:
-			Fl.remove_timeout(self.notime)
+			Fl.remove_timeout(self.after_5_seconds_and_no_input)
 			self.next_sequence()
 
-		print('self.pressed: ' + str(self.pressed))
 
-	def notime(self):
-		Fl.remove_timeout(self.notime)
+	def after_5_seconds_and_no_input(self):
+		Fl.remove_timeout(self.after_5_seconds_and_no_input)
 		fl_message(f'your score is: {len(self.sequence)}')
 		self.sound = str(os.path.join(self.working_dir,'error.mp3'))
 		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
@@ -173,7 +171,7 @@ class game(Fl_Window):
 
 
 	def start_cb(self,wid):
-		Fl.remove_timeout(self.notime)
+		Fl.remove_timeout(self.after_5_seconds_and_no_input)
 		if self.sequence != []:
 			fl_message(f'your score is: {len(self.sequence)}')
 		Fl.remove_timeout(self.flash)
