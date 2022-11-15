@@ -121,7 +121,7 @@ class game(Fl_Window):
 		Fl.add_timeout(1.0,self.kill_last_process,f'{color}.mp3')
 		Fl.add_timeout(5.0,self.notime)
 		
-		if correct == True:
+		if correct is True:
 			Fl.remove_timeout(self.notime)
 			self.next_sequence()
 				
