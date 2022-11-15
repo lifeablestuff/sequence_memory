@@ -47,38 +47,54 @@ class game(Fl_Window):
 			 
 			# terminating process
 		os.kill(int(pid), signal.SIGTERM)
-			
+	'''
+	def set_widget_color(self,widget,color):
+        if widget == color:
+            if widget == 'red':
+                self.red.color(FL_RED)
+            elif widget == 'blue':
+                self.blue.color(FL_BLUE)
+            elif widget == 'yellow':
+                self.yellow.color(FL_YELLOW)
+            else:
+                self.green.color(FL_GREEN)
+    '''
+    
+
+                    # make setters and getters
+    def set_color(self,widget,color):
+        widget.color(color)
 
 	def reactive(self):
 		self.red.activate()
 		self.blue.activate()
 		self.green.activate()
 		self.yellow.activate()
-		
+
 	def flash(self):
 		self.sound = str(os.path.join(self.working_dir,f'{self.sequence[self.temp]}.mp3'))
 		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
 		Fl.add_timeout(5.0,self.kill_last_process,self.sound.pid)
-		
+
 		if self.sequence[self.temp] == 'red':
-			self.red.color(FL_WHITE)
+			self.set_color(self.red,FL_WHITE)
 		elif self.sequence[self.temp] == 'blue':
-			self.blue.color(FL_WHITE)
+			self.set_color(self.blue,FL_WHITE)
 		elif self.sequence[self.temp] == 'yellow':
-			self.yellow.color(FL_WHITE)
+			self.set_color(self.yellow,FL_WHITE)
 		elif self.sequence[self.temp] == 'green':
-			self.green.color(FL_WHITE)
+			self.set_color(self.green,FL_WHITE)
 		self.redraw()
 		Fl.add_timeout(0.4,self.change_back)
 		self.temp += 1
-		
+
 	def change_back(self):
 		self.red.color(FL_RED)
 		self.blue.color(FL_BLUE)
 		self.yellow.color(FL_YELLOW)
 		self.green.color(FL_GREEN)
 		self.redraw()
-	
+
 	def next_sequence(self):
 		self.red.deactivate()
 		self.blue.deactivate()
@@ -86,17 +102,17 @@ class game(Fl_Window):
 		self.yellow.deactivate()
 		self.temp = 0
 		self.pressed = []
-		
+
 		self.sequence.append(random.choice(['yellow','blue','red','green']))
 		for x in range(len(self.sequence)):
 			Fl.add_timeout(1.0+ 1.0*x,self.flash)
 			Fl.add_timeout(1.0+1.0*len(self.sequence),self.reactive)
-			
+
 		Fl.add_timeout(1.0+1.0*len(self.sequence)+5.0,self.notime)
-		
-		
+
+
 	def but_press(self,wid,color):
-		
+
 		Fl.remove_timeout(self.notime)
 		correct = False
 		self.pressed.append(color)
@@ -105,12 +121,12 @@ class game(Fl_Window):
 		if len(self.sequence) == 0:
 			fl_message("please start the game first")
 			return None
-		
+
 		for x in range(len(self.pressed)):
 			if self.pressed[x] == self.sequence[x]:
 				if len(self.pressed) == len(self.sequence):
 					correct = True
-			
+
 			else:
 				Fl.add_timeout(3.0,self.kill_last_process,self.sound.pid)
 				self.sound = str(os.path.join(self.working_dir,'error.mp3'))
@@ -123,25 +139,25 @@ class game(Fl_Window):
 				self.sequence = []
 				return None
 				break
-		
+
 		Fl.add_timeout(1.0,self.kill_last_process,self.sound.pid)
 		Fl.add_timeout(5.0,self.notime)
-		
+
 		if correct == True:
 			Fl.remove_timeout(self.notime)
 			self.next_sequence()
-				
+
 		print('self.pressed: ' + str(self.pressed))
-	
-	def notime(self):
+
+    def notime(self):
 		Fl.remove_timeout(self.notime)
 		fl_message(f'your score is: {len(self.sequence)}')
 		self.sound = str(os.path.join(self.working_dir,'error.mp3'))
 		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
 		self.sequence = []
 		self.pressed = []
-		
-	
+
+
 	def start_cb(self,wid):
 		Fl.remove_timeout(self.notime)
 		if self.sequence != []:
