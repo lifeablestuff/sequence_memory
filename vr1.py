@@ -4,6 +4,7 @@ import os
 import random
 import signal
 
+# this is a comment
 class game(Fl_Window):
 	def __init__(self,w,h,l):
 		Fl_Window.__init__(self,500,300,w,h,l)
