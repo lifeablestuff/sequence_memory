@@ -4,7 +4,6 @@ import os
 import random
 import signal
 
-# this is a comment
 class game(Fl_Window):
 	def __init__(self,w,h,l):
 		Fl_Window.__init__(self,500,300,w,h,l)
@@ -21,11 +20,11 @@ class game(Fl_Window):
 		self.green.color(FL_GREEN)
 		Fl.scheme('plastic')
 		self.end()
-		self.start.callback(self.start_cb)
-		self.yellow.callback(self.but_press,'yellow')
-		self.blue.callback(self.but_press,'blue')
-		self.red.callback(self.but_press,'red')
-		self.green.callback(self.but_press,'green')
+		self.start.callback(self.start_callback)
+		self.yellow.callback(self.button_press,'yellow')
+		self.blue.callback(self.button_press,'blue')
+		self.red.callback(self.button_press,'red')
+		self.green.callback(self.button_press,'green')
 		self.pressed = []
 		self.sequence = []
 		self.correctbut = iter(self.sequence)
@@ -36,7 +35,7 @@ class game(Fl_Window):
 		self.sound = 0
 		self.resizable(self)
 	
-	
+
 	def kill_process(self,pid):
 		'''
 		for line in os.popen("ps ax | grep " + name + " | grep -v grep"):
@@ -90,7 +89,9 @@ class game(Fl_Window):
 
 		self.redraw()
 	
-	
+	def play_sound(self,mp3_file):
+		self.sound = str(os.path.join(self.working_dir,mp3_file))
+		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
 
 	def activate_buttons(self):
 		self.red.activate()
@@ -98,13 +99,12 @@ class game(Fl_Window):
 		self.green.activate()
 		self.yellow.activate()
 
-	def flash(self):
-		self.sound = str(os.path.join(self.working_dir,f'{self.sequence[self.temp]}.mp3'))
-		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
+	def button_flash(self):
+		self.play_sound(f'{self.sequence[self.temp]}.mp3')
 		Fl.add_timeout(5.0,self.kill_process,self.sound.pid)
 
 		self.set_color([self.sequence[self.temp],'white'])
-		Fl.add_timeout(0.5,self.set_color,[self.sequence[self.temp]])
+		Fl.add_timeout(0.25,self.set_color,[self.sequence[self.temp]])
 		
 		self.redraw()
 		self.temp += 1
@@ -119,19 +119,18 @@ class game(Fl_Window):
 
 		self.sequence.append(random.choice(['yellow','blue','red','green']))
 		for x in range(len(self.sequence)):
-			Fl.add_timeout(1.25+ 1.025*x,self.flash)
-			Fl.add_timeout(1.0+1.0*len(self.sequence),self.activate_buttons)
+			Fl.add_timeout(0.5+ 0.5*x,self.button_flash)
+			Fl.add_timeout(0.5+0.5*len(self.sequence),self.activate_buttons)
 
-		Fl.add_timeout(1.0+1.0*len(self.sequence)+5.0,self.notime)
+		Fl.add_timeout(1.0+1.0*len(self.sequence)+5.0,self.after_5_seconds_and_no_input)
 
 
-	def but_press(self,wid,color):
+	def button_press(self,wid,color):
 
-		Fl.remove_timeout(self.notime)
+		Fl.remove_timeout(self.after_5_seconds_and_no_input)
 		correct = False
 		self.pressed.append(color)
-		self.sound = str(os.path.join(self.working_dir,f'{color}.mp3'))
-		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
+		self.play_sound(f'{color}.mp3')
 		if len(self.sequence) == 0:
 			fl_message("please start the game first")
 			return None
@@ -142,11 +141,10 @@ class game(Fl_Window):
 					correct = True
 
 			else:
-				Fl.add_timeout(3.0,self.kill_process,self.sound.pid)
-				self.sound = str(os.path.join(self.working_dir,'error.mp3'))
-				self.sound = subprocess.Popen(['vlc','--intf', 'dummy',self.sound])
+				self.kill_process(self.sound.pid)
+				self.play_sound('error.mp3')
 				Fl.add_timeout(5.0,self.kill_process,self.sound.pid)
-				Fl.remove_timeout(self.notime)
+				Fl.remove_timeout(self.after_5_seconds_and_no_input)
 				fl_message(f'your score is: {len(self.sequence)}')
 				correct = False
 				self.pressed = []
@@ -155,28 +153,27 @@ class game(Fl_Window):
 				break
 
 		Fl.add_timeout(1.0,self.kill_process,self.sound.pid)
-		Fl.add_timeout(5.0,self.notime)
+		Fl.add_timeout(5.0,self.after_5_seconds_and_no_input)
 
 		if correct == True:
-			Fl.remove_timeout(self.notime)
+			Fl.remove_timeout(self.after_5_seconds_and_no_input)
 			self.next_sequence()
 
-		print('self.pressed: ' + str(self.pressed))
 
-	def notime(self):
-		Fl.remove_timeout(self.notime)
+	def after_5_seconds_and_no_input(self):
+		Fl.remove_timeout(self.after_5_seconds_and_no_input)
+		self.kill_process(self.sound.pid)
+		self.play_sound('error.mp3')
 		fl_message(f'your score is: {len(self.sequence)}')
-		self.sound = str(os.path.join(self.working_dir,'error.mp3'))
-		self.sound = subprocess.Popen(['vlc','--intf','dummy',self.sound])
 		self.sequence = []
 		self.pressed = []
 
 
-	def start_cb(self,wid):
-		Fl.remove_timeout(self.notime)
+	def start_callback(self,wid):
+		Fl.remove_timeout(self.after_5_seconds_and_no_input)
 		if self.sequence != []:
 			fl_message(f'your score is: {len(self.sequence)}')
-		Fl.remove_timeout(self.flash)
+		Fl.remove_timeout(self.button_flash)
 		Fl.remove_timeout(self.activate_buttons)
 		self.activate_buttons()
 		Fl.add_timeout(1.0,self.next_sequence)
